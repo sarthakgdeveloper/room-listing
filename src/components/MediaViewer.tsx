@@ -9,6 +9,7 @@ interface MediaViewerProps {
   room_images: string[];
 }
 
+// MediaViewer displays either a video or a carousel of images for a room
 export default function MediaViewer({
   video_url,
   room_images,
@@ -19,12 +20,14 @@ export default function MediaViewer({
     rootMargin: "200px 0px",
   });
 
+  // Handle video lazy loading and play/pause based on intersection
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement || !video_url) return;
 
     let hasLoaded = false;
 
+    // IntersectionObserver to load and play video only when in view
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -49,6 +52,7 @@ export default function MediaViewer({
 
   return (
     <div className="rounded-lg overflow-hidden relative h-[30vh]">
+      {/* Show video if available, otherwise show image carousel, otherwise fallback */}
       {video_url ? (
         <video
           ref={videoRef}

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
+// Props for LazyImage component
 interface LazyImageProps {
   src: string;
   alt: string;
@@ -7,24 +8,20 @@ interface LazyImageProps {
   isInView: boolean;
 }
 
+// LazyImage displays an image with a blur-up effect and only loads when in view
 const LazyImage: React.FC<LazyImageProps> = ({
   src,
   alt,
   className,
-  isInView,
+  isInView = false,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!isInView && isLoaded) {
-      setIsLoaded(false);
-    }
-  }, [isInView, isLoaded]);
 
   const imageSrc = isInView ? src : "";
 
   return (
     <div className={`relative overflow-hidden bg-gray-200 ${className}`}>
+      {/* Blurred background placeholder, fades out when image loads */}
       <div
         style={{ backgroundImage: `url(${imageSrc})` }}
         className={`
@@ -33,11 +30,14 @@ const LazyImage: React.FC<LazyImageProps> = ({
           ${isLoaded ? "opacity-0" : "opacity-100 blur-md"}
         `}
       />
+      {/* Actual image, fades in when loaded */}
       {isInView && (
         <img
           src={src}
           alt={alt}
-          onLoad={() => setIsLoaded(true)}
+          onLoad={() => {
+            setIsLoaded(true);
+          }}
           className={`
               relative w-full h-full object-cover
               transition-opacity duration-300
