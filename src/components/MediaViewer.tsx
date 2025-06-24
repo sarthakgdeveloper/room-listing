@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
+import LazyImage from "./LazyImage";
 
 interface MediaViewerProps {
   video_url: string;
@@ -61,7 +62,7 @@ export default function MediaViewer({
         >
           {room_images.map((imageUrl) => (
             <div key={imageUrl} className="h-[30vh]">
-              <img
+              <LazyImage
                 src={imageUrl}
                 alt="Room"
                 className="w-full h-full object-cover"
