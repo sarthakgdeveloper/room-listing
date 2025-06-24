@@ -1,7 +1,7 @@
 import React, {
   createContext,
   useContext,
-  useState,
+  useReducer,
   useRef,
   useEffect,
   ReactNode,
@@ -12,6 +12,48 @@ import { fetchRooms } from "../utils/fetchRooms";
 import { debounce } from "../utils/debounce";
 
 const ITEMS_PER_PAGE = 10;
+
+interface State {
+  rooms: Room[];
+  loading: boolean;
+  error: boolean;
+  hasMore: boolean;
+  page: number;
+}
+
+type Action =
+  | { type: "FETCH_START" }
+  | { type: "FETCH_SUCCESS"; payload: { rooms: Room[]; hasMore: boolean } }
+  | { type: "FETCH_FAILURE" }
+  | { type: "LOAD_MORE" };
+
+const initialState: State = {
+  rooms: [],
+  loading: false,
+  error: false,
+  hasMore: true,
+  page: 1,
+};
+
+const reducer = (state: State, action: Action): State => {
+  switch (action.type) {
+    case "FETCH_START":
+      return { ...state, loading: true, error: false };
+    case "FETCH_SUCCESS":
+      return {
+        ...state,
+        loading: false,
+        rooms: [...state.rooms, ...action.payload.rooms],
+        hasMore: action.payload.hasMore,
+      };
+    case "FETCH_FAILURE":
+      return { ...state, loading: false, error: true };
+    case "LOAD_MORE":
+      return { ...state, page: state.page + 1 };
+    default:
+      return state;
+  }
+};
 
 interface RoomContextType {
   rooms: Room[];
@@ -24,59 +66,51 @@ interface RoomContextType {
 const RoomContext = createContext<RoomContextType | undefined>(undefined);
 
 export const RoomProvider = ({ children }: { children: ReactNode }) => {
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const pageRef = useRef(1);
+  const [state, dispatch] = useReducer(reducer, initialState);
   const observerRef = useRef<HTMLDivElement>(null);
-
-  const loadingRef = useRef(loading);
-  loadingRef.current = loading;
-  const hasMoreRef = useRef(hasMore);
-  hasMoreRef.current = hasMore;
-
-  const initialLoadCalled = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const loadRooms = useCallback(async (page: number) => {
-    // Abort any previous ongoing request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
-
-    setLoading(true);
+  const loadRooms = useCallback(async (page: number, signal: AbortSignal) => {
+    dispatch({ type: "FETCH_START" });
     try {
       const response = await fetchRooms(page, ITEMS_PER_PAGE, signal);
-      if (signal.aborted) return;
-      setRooms((prev) => [...prev, ...response.data]);
-      setHasMore(response.hasMore);
+      if (!signal.aborted) {
+        dispatch({
+          type: "FETCH_SUCCESS",
+          payload: { rooms: response.data, hasMore: response.hasMore },
+        });
+      }
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
-        setError(true);
-      }
-    } finally {
-      if (!signal.aborted) {
-        setLoading(false);
+        dispatch({ type: "FETCH_FAILURE" });
       }
     }
   }, []);
 
   const debouncedLoadMore = useRef(
     debounce(() => {
-      if (hasMoreRef.current && !loadingRef.current) {
-        pageRef.current += 1;
-        loadRooms(pageRef.current);
+      if (state.hasMore && !state.loading) {
+        dispatch({ type: "LOAD_MORE" });
       }
     }, 300)
   ).current;
 
   useEffect(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    loadRooms(state.page, abortControllerRef.current.signal);
+
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, [state.page, loadRooms]);
+
+  useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
+        if (entries[0].isIntersecting && !state.loading) {
           debouncedLoadMore();
         }
       },
@@ -93,27 +127,13 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
         observer.unobserve(currentObserverRef);
       }
     };
-  }, [debouncedLoadMore, loading]);
-
-  useEffect(() => {
-    if (initialLoadCalled.current) {
-      return;
-    }
-    initialLoadCalled.current = true;
-    loadRooms(pageRef.current);
-
-    return () => {
-      if (abortControllerRef.current && !initialLoadCalled.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, [loadRooms]);
+  }, [debouncedLoadMore, state.loading]);
 
   const value = {
-    rooms,
-    loading,
-    error,
-    hasMore,
+    rooms: state.rooms,
+    loading: state.loading,
+    error: state.error,
+    hasMore: state.hasMore,
     loadMoreRef: observerRef,
   };
 
