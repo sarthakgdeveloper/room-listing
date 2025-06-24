@@ -92,9 +92,6 @@ export async function fetchRooms(
     const paginatedRooms = allRooms.slice(startIndex, endIndex);
     const totalPages = Math.ceil(allRooms.length / limit);
 
-    // Artificial delay to simulate network latency
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
     return {
       data: paginatedRooms,
       totalPages,
