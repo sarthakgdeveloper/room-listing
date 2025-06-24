@@ -4,11 +4,17 @@ import { RoomProvider } from "./context/RoomContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 // Hey Sarthak this side, I really enjoyed completing this assignment
+
 // point I would like to add
+
 // I tried adding virtualization to the RoomListPage, but due to time constraint,
 // I was stucked to deliver this feature,
 // as it requires to add dynamic height to each roomcard items
 // which was the tricky part in the give time frame
+
+// also in case of images, how could I use srcSet for just one url,
+// I tried looking for image url with different dimension, but there was none,
+// so I had to use the same image url for all the dimensions
 
 // Main entry point of the application
 // Wraps the app in an error boundary and provides room data context
