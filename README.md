@@ -1,4 +1,4 @@
-# Unravel Room Listing
+# Room Listing
 
 This is a single-page application built with React that displays a list of hotel rooms and their variants. It's designed to be performant and user-friendly, featuring infinite scrolling, lazy-loaded media, and a clean, responsive interface.
 
@@ -85,6 +85,8 @@ This command will generate a `dist` folder containing the optimized and minified
 ## Deployment
 
 This project is pre-configured for deployment on [Netlify](https://www.netlify.com/). The `netlify.toml` file in the root directory contains the necessary build settings and redirect rules for a single-page application.
+
+Netlify Link: `https://unravel-room-listing.netlify.app/`
 
 To deploy:
 
