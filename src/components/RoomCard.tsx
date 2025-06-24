@@ -15,7 +15,10 @@ export default function RoomCard({ room }: { room: Room }) {
 
   return (
     <div className="p-4 border rounded-xl shadow-md w-full">
-      <MediaViewer video_url={room.video_url} room_images={room.room_images} />
+      <MediaViewer
+        video_url={room.video_url || ""}
+        room_images={room.room_images || []}
+      />
       <div className="mt-4">
         <h2 className="text-xl font-bold mb-2">{room.roomName}</h2>
 

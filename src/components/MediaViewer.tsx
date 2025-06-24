@@ -1,36 +1,78 @@
-import React from "react";
-import { useInView } from "react-intersection-observer";
-import ImageCarousel from "./ImageCarousel";
+import React, { useRef, useEffect } from "react";
+import "react-responsive-carousel/lib/styles/carousel.min.css";
+import { Carousel } from "react-responsive-carousel";
+
+interface MediaViewerProps {
+  video_url: string;
+  room_images: string[];
+}
 
 export default function MediaViewer({
   video_url,
   room_images,
-}: {
-  video_url?: string;
-  room_images?: string[];
-}) {
-  const { ref, inView } = useInView({ triggerOnce: false, threshold: 0.25 });
+}: MediaViewerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  if (!video_url && (!room_images || room_images.length === 0)) return null;
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement || !video_url) return;
+
+    let hasLoaded = false;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (!hasLoaded) {
+            videoElement.src = video_url;
+            hasLoaded = true;
+          }
+          videoElement.play().catch((e) => console.error("Autoplay failed", e));
+        } else {
+          videoElement.pause();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(videoElement);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [video_url]);
 
   return (
-    <div
-      ref={ref}
-      className="overflow-hidden rounded-lg relative flex items-center justify-center bg-gray-100 h-[30vh]"
-    >
-      {video_url && inView ? (
+    <div className="rounded-lg overflow-hidden relative h-[30vh]">
+      {video_url ? (
         <video
-          src={video_url}
+          ref={videoRef}
           controls
-          autoPlay
           muted
           playsInline
+          loop
           className="w-full h-full object-cover"
         />
-      ) : room_images?.length && inView ? (
-        <ImageCarousel images={room_images} />
+      ) : room_images && room_images.length > 0 ? (
+        <Carousel
+          showThumbs={false}
+          showStatus={false}
+          infiniteLoop
+          useKeyboardArrows
+        >
+          {room_images.map((imageUrl) => (
+            <div key={imageUrl} className="h-[30vh]">
+              <img
+                src={imageUrl}
+                alt="Room"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+        </Carousel>
       ) : (
-        <div className="bg-gray-100 h-full w-full animate-pulse" />
+        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+          <p>No media available</p>
+        </div>
       )}
     </div>
   );
