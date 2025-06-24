@@ -65,15 +65,14 @@ export default function MediaViewer({
             infiniteLoop
             useKeyboardArrows
           >
-            {room_images.map((imageUrl) => (
-              <div key={imageUrl} className="h-[30vh]">
-                <LazyImage
-                  src={imageUrl}
-                  alt="Room"
-                  className="w-full h-full object-cover"
-                  isInView={inView}
-                />
-              </div>
+            {room_images.map((imageUrl, idx) => (
+              <LazyImage
+                key={`${imageUrl}_${idx}`}
+                src={imageUrl}
+                alt="Room"
+                isInView={inView}
+                className="h-[30vh]"
+              />
             ))}
           </Carousel>
         </div>

@@ -21,17 +21,6 @@ const LazyImage: React.FC<LazyImageProps> = ({
     }
   }, [isInView, isLoaded]);
 
-  useEffect(() => {
-    if (isInView) {
-      const img = new Image();
-      img.src = src;
-      img.onload = () => {
-        setIsLoaded(true);
-      };
-    }
-  }, [isInView, src]);
-
-  // Use a blank src if not in view
   const imageSrc = isInView ? src : "";
 
   return (
@@ -44,15 +33,18 @@ const LazyImage: React.FC<LazyImageProps> = ({
           ${isLoaded ? "opacity-0" : "opacity-100 blur-md"}
         `}
       />
-      <img
-        src={imageSrc}
-        alt={alt}
-        className={`
-          relative w-full h-full object-cover
-          transition-opacity duration-300
-          ${isLoaded ? "opacity-100" : "opacity-0"}
-        `}
-      />
+      {isInView && (
+        <img
+          src={src}
+          alt={alt}
+          onLoad={() => setIsLoaded(true)}
+          className={`
+              relative w-full h-full object-cover
+              transition-opacity duration-300
+              ${isLoaded ? "opacity-100" : "opacity-0"}
+            `}
+        />
+      )}
     </div>
   );
 };
